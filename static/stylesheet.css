@@ -1,0 +1,122 @@
+@CHARSET "UTF-8";
+
+body {
+	background-color: ffffff;
+	font-family: Consolas, monaco, monospace;
+	font-size: 14px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+	color: #363636;
+}
+
+h1 {
+    font-family: ‘Palatino Linotype’, ‘Book Antiqua’, Palatino, serif;
+    font-weight: 5000;
+    font-size: 42px;
+    letter-spacing: 1.1px;
+    line-height: 1.1;
+    color: 606060;
+    text-align: left;
+    /*text-shadow: 2px 2px #000000;*/
+}
+    
+h2  {
+    font-family: ‘Palatino Linotype’, ‘Book Antiqua’, Palatino, serif;
+    font-weight: 5000;
+    font-size: 24px;
+    letter-spacing: 1.1px;
+    line-height: 1.1;
+    color: 606060;
+    text-align: left;
+    /*text-shadow: 2px 2px #000000;*/
+}  
+  
+.buttonHolder {
+	text-align: center;
+}
+
+#logo {
+	height: 175px;
+}
+
+/*** resultsTable ***/
+
+#resultsTable {
+	word-wrap: break-word;
+}
+
+#resultsTable th {
+	border: 0px solid gray;
+	padding-top: 4px;
+    padding-right: 11px;
+    padding-bottom: 4px;
+    padding-left: 11px;
+    background-color: #C7C7B7;
+}
+
+#resultsTable tr:nth-child(even) {
+    background-color: #E8E8E8;
+}
+
+#resultsTable td {
+	border: 0px solid gray;
+	padding-top: 3px;
+    padding-right: 13px;
+    padding-bottom: 3px;
+    padding-left: 13px;
+    max-width: 400px;
+}
+
+/*** #gco_profile_table ***/
+
+#gco_profile_table {
+	max-width: 700px;
+}
+
+#gco_profile_table th{
+	background-color: #C7C7B7;
+}
+
+#gco_profile_table tr:nth-child(even) {
+    background-color: #E8E8E8;
+}
+
+#gco_profile_table th, 
+#gco_profile_table td{
+	border: 1px solid gray;
+	padding-top: 4px;
+    padding-right: 15px;
+    padding-bottom: 4px;
+    padding-left: 15px;
+    max-width: 400px;
+}
+
+#logoutLink {
+	position:fixed;
+    right:10px;
+    top:5px;
+    font-family: ‘Palatino Linotype’, ‘Book Antiqua’, Palatino, serif;
+    font-weight: 5000;
+    font-size: 24px;
+}
+
+/*
+#risUploadForm{
+	display: block;
+	margin-bottom: 100px;
+    padding:4px 2px;
+    width: 450px;
+    margin:2px 0 20px 10px;
+    line-height: 300%;
+}
+*/
+
+/*Submit button*/
+input[type=submit] {
+	padding:5px 15px;
+	background:#ccc;
+	border:0 none;
+	cursor:pointer;
+	-webkit-border-radius: 5px;
+	border-radius: 5px; }
