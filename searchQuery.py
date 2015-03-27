@@ -4,8 +4,7 @@ Created on Jan 30, 2015
 @author: edmundwong
 '''
 
-import pymysql
-import json
+import pymysql, json, keyring
 
 def searchBookings(startRange, endRange, resources):
 
@@ -39,7 +38,7 @@ def searchBookings(startRange, endRange, resources):
         and (bookings.resource_id """ + resource_id_condition    
     
     print query_block
-    result = (execute_query(query_block), ('GCO','PI','FundNumber','Funding Source','Resource','Date','Duration','Development','ExamType1','ExamType2','ExamType3','Isotope'))
+    result = (execute_query(query_block,"calpendo"), ('GCO','PI','FundNumber','Funding Source','Resource','Date','Duration','Development','ExamType1','ExamType2','ExamType3','Isotope'))
     return result 
 
     
@@ -74,7 +73,7 @@ def searchProjects(projectType, projectGroup):
     
         
     print query_block
-    result = (execute_query(query_block), ('GCO','Name','Type','PI','Pi Email','PI Phone Number','FundNumber', 'Funding Source'))
+    result = (execute_query(query_block,"calpendo"), ('GCO','Name','Type','PI','Pi Email','PI Phone Number','FundNumber', 'Funding Source'))
     return result
 
 def getUserActivity():
@@ -93,7 +92,7 @@ def getUserActivity():
         GROUP BY users.id
         order by concat(users.given_name,' ',users.family_name)"""
         
-    result = (execute_query(query_block), ('Name', 'UserName', 'Last Activity','Activity Count','Created','User Status'))
+    result = (execute_query(query_block,"calpendo"), ('Name', 'UserName', 'Last Activity','Activity Count','Created','User Status'))
     return result
 
 def searchRescheduledBookings():
@@ -181,7 +180,7 @@ def searchRescheduledBookings():
         resources.id in (1, 2, 3, 4)
         order by bookings_with_updated_data.affected_pk, bookings_with_updated_data.update_log_date
     """
-    result = (execute_query(query_block), ('Booking ID','Created','Init_sched_time1','Init_sched_time2','Updated_sched_time1','Updated_sched_time2','Update_log_date', 'Status', 'Development','gco','PI','Resource','Rescheduler'))
+    result = (execute_query(query_block,"calpendo"), ('Booking ID','Created','Init_sched_time1','Init_sched_time2','Updated_sched_time1','Updated_sched_time2','Update_log_date', 'Status', 'Development','gco','PI','Resource','Rescheduler'))
     return result
 
 def getGcoInfo(gco):
@@ -228,21 +227,113 @@ def getGcoInfo(gco):
                         LEFT JOIN users ON users.id = project_users.user_id
                         WHERE projects.project_code='""" + gco + "'"
                         
-    result = (execute_query(query_block), execute_query(query_block2), execute_query(query_block3), ('Title','GCO','PI','Status','Type','PI email','PI Phone Number','Coordinator E-mail', 'Coordinator Name','Primary Resource','Other investigators', 'Department', 'Description', 'Fund#', 'Duration', 'Proposed Start Date','Total Dollar Budget','# of Scans (Year 1)','# of Scans (Year 2)','# of Scans (Year 3)','# of Scans (Year 4)','# of Scans (Year 5)','Session Duration'))
+    result = (execute_query(query_block,"calpendo"), execute_query(query_block2,"calpendo"), execute_query(query_block3,"calpendo"), ('Title','GCO','PI','Status','Type','PI email','PI Phone Number','Coordinator E-mail', 'Coordinator Name','Primary Resource','Other investigators', 'Department', 'Description', 'Fund#', 'Duration', 'Proposed Start Date','Total Dollar Budget','# of Scans (Year 1)','# of Scans (Year 2)','# of Scans (Year 3)','# of Scans (Year 4)','# of Scans (Year 5)','Session Duration'))
    
     return result
 
+def searchFinances(startRange, endRange, resources):
+    startRange = pymysql.escape_string(startRange)
+    endRange = pymysql.escape_string(endRange)
+    
+    if resources:
+        resource_id_condition = "in (" + ",".join(resources) + "))"
+    else:
+        resource_id_condition = "like '%' or bookings.resource_id is null)"
 
+    query_block= """
+    select revenue_table.gco,
+    fund_number,
+    revenue_table.investigator,
+    revenue,
+    totalApprovedHours,
+    DevelopmentHours,
+    NonDevelopmentHours,
+    risHours,
+    CalpendoHours
+    
+    from
+    
+    (select 
+    `RMC_20150318`.received.gco,
+    `RMC_20150318`.received.fund_number,
+    `RMC_20150318`.received.investigator,
+    round(sum(`RMC_20150318`.received.charge),2) as "revenue"
+    from `RMC_20150318`.received
+    where
+    (`RMC_20150318`.received.date_of_service >= '""" + startRange + """' and `RMC_20150318`.received.date_of_service <= '""" + endRange + """')
+    group by `RMC_20150318`.received.gco) as revenue_table
 
-def execute_query(query_block):
+    left join
+    
+    (
+    # risCal - Merge both Calpendo and RIS bookings and extract detailed usage info
+    SELECT 
+    risCal.gco,
+    risCal.investigator,
+    round(sum(risCal.hours),2) as 'totalApprovedHours',
+    round(sum(if(risCal.development like 'Yes%', risCal.hours, 0)),2) as 'DevelopmentHours',
+    round(sum(if(risCal.development = 'No' or risCal.development is null, risCal.hours, 0)),2) as 'NonDevelopmentHours',
+    round(sum(if(risCal.system = 'ris', risCal.Hours,0)),2) as 'risHours',
+    round(sum(if(risCal.system = 'calpendo', risCal.Hours,0)),2) as 'CalpendoHours'
+     FROM
+    (
+    
+    #Select all Calpendo individual bookings, get duration and development info
+    SELECT projects.project_code as 'gco',
+    concat(projects.pi_firstname,' ', projects.principal_investigator) as 'investigator',
+    bookings.start_date as 'scandate',
+    round(bookings.duration/60,2) as 'hours',
+    bookings.development as 'development',
+    concat('TMII HESS ', resources.name) as 'Resource',
+    'calpendo' as 'system'
+    FROM bookings
+    left join projects on projects.id = bookings.project_id
+    left join resources on resources.id = bookings.resource_id
+    WHERE bookings.status = 'APPROVED'
+
+    UNION ALL
+    
+    #Select all RIS individual bookings, get duration and development info
+    SELECT `RMC_20150318`.ris.gco, 
+    `RMC_20150318`.ris.investigator,
+    `RMC_20150318`.ris.scandate,
+    round(`RMC_20150318`.ris.duration/60,2) as 'hours',
+    case when `RMC_20150318`.ris.gco like '%D' then 'Yes' else 'No' end as 'development',
+    `RMC_20150318`.ris.Resource,
+    'ris' as 'system'
+    FROM `RMC_20150318`.ris
+    WHERE (`RMC_20150318`.ris.Resource not like 'TMII HESS%' or `RMC_20150318`.ris.Resource is null)
+
+    ) as risCal
+    where
+    (risCal.scandate >= '""" + startRange + """' and risCal.scandate <= '""" + endRange + """')
+    group by risCal.gco) as usageInfo
+    
+    on revenue_table.gco = usageInfo.gco
+    
+    order by revenue desc"""
+    
+    print query_block
+    result = (execute_query(query_block,"calpendo"), ('GCO','FundNumber','Investigator','Revenue','totalApprovedHours','DevelopmentHours','NonDevelopmentHours','risHours','CalpendoHours'))
+    return result 
+    
+def getRates():
+    query_block = """select id, gco, investigator, target_organ, target_abbr, system, basecharge, addhalfhourcharge from rates"""
+    result = (execute_query(query_block,"rmc"), ('GCO', 'investigator', 'exam desc','examcode','system','basecharge','addhalfhourcharge','UPDATE basecharge/addhalfhourcharge'))
+    return result
+    
+def execute_query(query_block, db):
     with open('./config.json') as f: 
         cfg = json.load(f)["mysql"]
     
     host = cfg["host"]
-    port = int(cfg["port"])
+    port = cfg["port"]
     user = cfg["user"]
-    pw = cfg["pw"]
-    db = cfg["calpendo_db"]
+    pw = keyring.get_password("anvilmacmini-edmund", "edmund")
+    if db == "calpendo":
+        db = cfg["calpendo_db"]
+    elif db == "rmc":
+        db = cfg["rmc_db"]
     
     conn = pymysql.connect(host=host, port=port, user=user, passwd=pw, db=db)
     cur = conn.cursor()

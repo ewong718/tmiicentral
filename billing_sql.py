@@ -3,16 +3,15 @@ Created on Mar 3, 2015
 
 @author: edmundwong
 '''
-import pymysql
-import json
+import pymysql, json, keyring
 
 def db_connect(db):
     with open('./config.json') as f: 
         cfg = json.load(f)["mysql"]
     host = cfg["host"]
-    port = int(cfg["port"])
+    port = cfg["port"]
     user = cfg["user"]
-    pw = cfg["pw"]
+    pw = keyring.get_password("anvilmacmini-edmund", "edmund")
     if db == "calpendo":
         db = cfg["calpendo_db"]
     elif db == "rmc":
@@ -249,3 +248,9 @@ def return_SRF_billing(monthYear):
                 order by start_date""")
     srfBillableScanList = cur.fetchall()
     return srfBillableScanList
+
+def updateRates(idx, changeBase, changeHalf):
+    cur = db_connect("rmc")
+    cur.execute(""" UPDATE rates
+    SET basecharge=""" + str(changeBase) + ", addhalfhourcharge=" + str(changeHalf) + """
+    WHERE id = """ + str(idx))

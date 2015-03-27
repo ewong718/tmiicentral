@@ -68,6 +68,16 @@ h2  {
     max-width: 400px;
 }
 
+#rightIndent {
+	border: 0px solid gray;
+	text-align: right;
+	padding-top: 3px;
+    padding-right: 13px;
+    padding-bottom: 3px;
+    padding-left: 13px;
+    max-width: 400px;
+}
+
 /*** #gco_profile_table ***/
 
 #gco_profile_table {
