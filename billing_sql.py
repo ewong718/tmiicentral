@@ -1,6 +1,5 @@
 '''
 Created on Mar 3, 2015
-
 @author: edmundwong
 '''
 import pymysql, json, keyring
@@ -11,7 +10,7 @@ def db_connect(db):
     host = cfg["host"]
     port = cfg["port"]
     user = cfg["user"]
-    pw = keyring.get_password("anvilmacmini-edmund", "edmund")
+    pw = keyring.get_password(cfg["pw_key_name"],cfg["pw_acct_name"])
     if db == "calpendo":
         db = cfg["calpendo_db"]
     elif db == "rmc":
