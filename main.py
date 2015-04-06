@@ -204,7 +204,7 @@ def do_billing_post():
     billing_sql.insertIntoRMCTable2(sessions2)
     billing_sql.insertIntoRMCTable3(sessions3)
     newRates = billing_sql.RMCPostImportSql(monthYear)
-    
+    return
     infoView = [sessions, sessions3, newRates, monthYear]
     return template('billing_import_verify.tpl', result=infoView)
 
@@ -215,7 +215,8 @@ def do_processedbillingdata(monthYear):
     saBillableScanList = billing_sql.return_SmallAnimal_billing(monthYear)
     ntrBillableScanList = billing_sql.return_NTR_billing(monthYear)
     srfBillableScanList = billing_sql.return_SRF_billing(monthYear)
-    return template('processedBillingData.tpl', result=[humanBillableScanList, saBillableScanList, ntrBillableScanList, srfBillableScanList])
+    return template('processedBillingData.tpl', result=[humanBillableScanList, saBillableScanList,
+                                                        ntrBillableScanList, srfBillableScanList])
 
 
 ###### PROJECTS Profile ######

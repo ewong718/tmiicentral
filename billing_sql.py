@@ -2,7 +2,13 @@
 Created on Mar 3, 2015
 @author: edmundwong
 '''
-import pymysql, json, keyring
+import json
+import keyring
+import pymysql
+from sqlalchemy import create_engine, MetaData, Table, and_, not_
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
 
 def db_connect(db):
     with open('./config.json') as f: 
@@ -15,48 +21,46 @@ def db_connect(db):
         db = cfg["calpendo_db"]
     elif db == "rmc":
         db = cfg["rmc_db"]
-    conn = pymysql.connect(host=host, port=port, user=user, passwd=pw, db=db)
-    cur = conn.cursor()
-    return cur
+    
+    # sqlalchemy
+    global metadata
+    global engine
+    engine = create_engine('mysql+pymysql://{user}:{pw}@{host}:{port}/{db}'.format(host = host, user = user,
+                                                                                   pw = pw, db = db, port = port), echo = False)
+    metadata = MetaData(bind=engine)
+    session = sessionmaker(bind=engine)
+    s = session()    
+    return s
+
 
 def insertIntoRMCTable1(result):
-    cur = db_connect("rmc")
-    
+    s = db_connect("rmc")
+    class Ris(declarative_base()):
+        __table__ = Table('ris', metadata, autoload=True)
     for row in result:
-        query_block = """INSERT INTO ris (gco, project, MRN, PatientsName, BirthDate, target_organ, target_abbr, accession_no, ScanDate, referring_md, status) VALUES ('""" + row[0] + "','" + row[1] + "','" + row[2] + "','" + row[3] + "','" + row[4] + "','" + row[5] + "','" + row[6] + "','" + row[7] + "','" + row[8] + "','" + row[9] + "','" + row[10] + "')" 
-        cur.execute(query_block)
+        entry = Ris(gco = row[0], project = row[1], MRN = row[2], PatientsName = row[3],
+                        BirthDate = row[4], target_organ = row[5], target_abbr = row[6],
+                        accession_no = row[7], ScanDate = row[8], referring_md = row[9],
+                        status = row[10])
+        s.add(entry)
+    s.commit()
+
         
 def insertIntoRMCTable2(result):
-    cur = db_connect("rmc")    
-    query_block = """CREATE TABLE temp_rsrch_dump (
-                    Accession INT(12) NULL,
-                    LastName VARCHAR(50) NULL,
-                    FirstName VARCHAR(50) NULL,
-                    ScheduledDTTM DATETIME NULL,
-                    CompletedDTTM DATETIME NULL,
-                    PerformingResourceDesc VARCHAR(120) NULL,
-                    DurationMinutes INT(11) NULL,
-                    UNIQUE INDEX Accession (Accession)
-                    )
-                    COLLATE='latin1_swedish_ci'
-                    ENGINE=MyISAM;"""
-    cur.execute(query_block)
-    for row in result:
-        query_block = """INSERT INTO temp_rsrch_dump (Accession, LastName, FirstName, ScheduledDTTM, CompletedDTTM, PerformingResourceDesc, DurationMinutes) VALUES ('""" + row[0] + "','" + row[2] + "','" + row[3] + "','" + row[5] + "','" + row[6] + "','" + row[11] + "','" + row[13] + "')"
-        cur.execute(query_block)
-    cur.execute("""UPDATE ris
-                INNER JOIN temp_rsrch_dump
-                ON ris.accession_no=temp_rsrch_dump.Accession
-                SET ris.LastName = temp_rsrch_dump.LastName,
-                ris.FirstName = temp_rsrch_dump.FirstName,
-                ris.Duration = temp_rsrch_dump.DurationMinutes,
-                ris.ScanDTTM = temp_rsrch_dump.ScheduledDTTM,
-                ris.CompletedDTTM = temp_rsrch_dump.CompletedDTTM,
-                ris.Resource = temp_rsrch_dump.PerformingResourceDesc""")    
-    cur.execute("DROP TABLE temp_rsrch_dump")
-    
+    s = db_connect("rmc")
+    class Ris(declarative_base()):
+        __table__ = Table('ris', metadata, autoload=True)
+    for row in result:       
+        s.query(Ris).filter(Ris.accession_no == row[0]).update({Ris.ScanDTTM: row[5],
+                                                                Ris.CompletedDTTM: row[6],
+                                                                Ris.Resource: row[11],
+                                                                Ris.Duration: row[13]})      
+
+
 def insertIntoRMCTable3(result):
-    cur = db_connect("rmc")
+    s = db_connect("rmc")
+    class Ris(declarative_base()):
+        __table__ = Table('ris', metadata, autoload=True)
     for row in result:
         row = list(row)
         for idx, val in enumerate(row):
@@ -64,25 +68,37 @@ def insertIntoRMCTable3(result):
                 row[idx] = pymysql.escape_string(unicode(val))
             except UnicodeDecodeError:
                 row[idx] = pymysql.escape_string(val.decode('iso-8859-1'))
+        entry = Ris(gco = row[0], project = row[1], MRN = row[2], PatientsName = row[3],
+                    BirthDate = row[4], target_organ = row[5], target_abbr = row[6],
+                    ScanDate = row[7], referring_md = row[8], Duration = row[9], ScanDTTM = row[10],
+                    CompletedDTTM = row[11], Resource = row[12], Investigator = row[13],
+                    fund_no = row[14])
+        s.add(entry)
+    s.commit()
         
-            
-        query_block = """INSERT INTO ris (gco, project, MRN, PatientsName, BirthDate, target_organ, target_abbr, ScanDate, referring_md, LastName, FirstName, Duration, ScanDTTM, CompletedDTTM, Resource, Investigator, fund_no) VALUES ('""" + row[0] + "','" + row[1] + "','" + row[2] + "','" + row[3] + "','" + row[4] + "','" + row[5] + "','" + row[6] + "','" + row[7] + "','" + row[8] + "','" + row[9] + "','" + row[10] + "','" + row[11] + "','" + row[12] + "','" + row[13] + "','" + row[14] + "','" + row[15] + "','" + row[16] + "')"
-        cur.execute(query_block)
         
 def RMCPostImportSql(monthYear):
     cur = db_connect("rmc")
     
+    s = db_connect("rmc")
+    class Ris(declarative_base()):
+        __table__ = Table('ris', metadata, autoload=True)
+    class Rates(declarative_base()):
+        __table__ = Table('rates', metadata, autoload=True)
+      
     #Find new rates and import to database
-    query_block = """SELECT DISTINCT
-                    ris.gco, ris.Investigator, ris.project, ris.target_organ, ris.target_abbr,
-                    case when ris.Resource like 'TMII HESS%' then 'Calpendo' else 'RIS' end as 'system'
-                    FROM ris LEFT JOIN rates on rates.gco=ris.gco and rates.target_abbr=ris.target_abbr
-                    WHERE ris.gco not like '%spec%' and
-                    rates.gco is null and
-                    rates.target_abbr is null"""
-    cur.execute(query_block)
-    newRates = cur.fetchall()
-    cur.execute("""INSERT INTO rates (gco, investigator, title, target_organ, target_abbr, system) """ + query_block)
+    q1 = s.query(Ris.gco, Ris.Investigator, Ris.project, Ris.target_organ, Ris.target_abbr, Ris.Resource)
+    q2 = q1.outerjoin(Rates, and_(Rates.gco == Ris.gco, Rates.target_abbr == Ris.target_abbr)).distinct()
+    newRates = q2.filter(and_(not_(Ris.gco.contains('spec')), Rates.gco == None, Rates.target_abbr == None)).all()
+    for row in newRates:
+        if row[5].startswith('TMII HESS'):
+            system = 'Calpendo'
+        else:
+            system = 'RIS'
+        entry = Rates(gco = row[0], investigator = row[1], title = row[2],
+                      target_organ = row[3], target_abbr = row[4], system = system)
+        s.add(entry)
+    s.commit()
     
     #Find new RIS projects and import to database
     query_block = """select distinct ris.gco from ris
