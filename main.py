@@ -204,7 +204,6 @@ def do_billing_post():
     billing_sql.insertIntoRMCTable2(sessions2)
     billing_sql.insertIntoRMCTable3(sessions3)
     newRates = billing_sql.RMCPostImportSql(monthYear)
-    return
     infoView = [sessions, sessions3, newRates, monthYear]
     return template('billing_import_verify.tpl', result=infoView)
 

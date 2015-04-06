@@ -5,10 +5,11 @@ Created on Mar 3, 2015
 import json
 import keyring
 import pymysql
-from sqlalchemy import create_engine, MetaData, Table, and_, not_
+import datetime
+from sqlalchemy import create_engine, MetaData, Table, and_, or_, not_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from searchQuery import run_query
 
 def db_connect(db):
     with open('./config.json') as f: 
@@ -78,7 +79,7 @@ def insertIntoRMCTable3(result):
         
         
 def RMCPostImportSql(monthYear):
-    cur = db_connect("rmc")
+    #cur = db_connect("rmc")
     
     s = db_connect("rmc")
     class Ris(declarative_base()):
@@ -100,59 +101,28 @@ def RMCPostImportSql(monthYear):
         s.add(entry)
     s.commit()
     
+    class Project_basics(declarative_base()):
+        __table__ = Table('project_basics', metadata, autoload=True)
+      
     #Find new RIS projects and import to database
-    query_block = """select distinct ris.gco from ris
-                  left join project_Basics on project_basics.gco=ris.gco 
-                  where project_Basics.gco is null and ris.gco not like '%spec%' and
-                   ris.gco not like '' and (ris.Resource not like 'TMII HESS%' or ris.Resource is null);"""
-    cur.execute(query_block)
-    newRisProjects = cur.fetchall()
-    cur.execute("""insert into project_basics (gco) """ + query_block)
+    q1 = s.query(Ris.gco).distinct().outerjoin(Project_basics, Project_basics.gco == Ris.gco)
+    q2 = q1.filter(and_(Project_basics.gco == None, not_(Ris.gco.contains('spec'))),
+                   or_(not_(Ris.Resource.startswith('TMII HESS')), Ris.Resource == None))
+    newRisProjects = q2.all()
+    for row in newRisProjects:
+        entry = Project_basics(gco = row[0])
+        s.add(entry)
+    s.commit()
     
-    cur.execute("""update ris
-                left join rates on
-                ris.gco = rates.gco and ris.target_abbr = rates.target_abbr
-                SET invoice_method = "TMII Central v3.0",
-                Invoice_Date = curdate(),
-                ris.charge = case when ris.duration is null then rates.basecharge
-                else round((ris.Duration/60-1)*(2*rates.addhalfhourcharge)+rates.basecharge,2) end
-                WHERE ris.scandate like '""" + monthYear + """%' and
-                ris.charge is null and
-                ris.no_charge_comment is null and
-                ris.charge_or_not = 1;""")
-
+    q1 = s.query(Ris).outerjoin(Rates, and_(Rates.gco == Ris.gco, Rates.target_abbr == Ris.target_abbr))
+    q2 = q1.filter(and_(Ris.ScanDate.startswith(monthYear), Ris.charge == None,
+                        Ris.no_charge_comment == None))
+    q2.update({Ris.invoice_method: 'TMII Central v3.2', Ris.invoice_date: datetime.date.today()}, synchronize_session = False)
     return [newRates, newRisProjects]
 
 def return_HumanScans_billing(monthYear):
-    
-    cur = db_connect("rmc")
-    cur.execute("""select
-                case
-                when ris.Resource like 'TMII HESS%' then ris.Investigator
-                else
-                project_basics.investigator
-                end as 'Investigator',
-                case
-                when ris.Resource like 'TMII HESS%' then ris.fund_no
-                else
-                project_basics.fund_no
-                end as 'Fund Number',
-                ris.target_abbr as "Catalog",
-                ris.target_organ as "Description",
-                ris.gco as "GCO Number",
-                ris.patientsname as "Subject ID",
-                ris.scandate as "Date of Service",
-                ris.charge as "Unit Price","1" as Quantity,
-                ris.charge as "Total",
-                ris.Resource as "Resource",
-                ris.Duration as "Duration"
-                from ris
-                left join project_basics on ris.gco = project_basics.gco
-                where
-                ris.scandate like '""" + monthYear + """%' and
-                 (ris.charge > '0' or ris.charge is null) and ris.GCO not like '%D'""")
-    
-    humanBillableScanList = cur.fetchall()
+
+    humanBillableScanList = run_query("call GenerateInvoiceByMonth('{monthYear}%')".format(monthYear = monthYear), "rmc")
     return humanBillableScanList
 
 def return_SmallAnimal_billing(monthYear):
