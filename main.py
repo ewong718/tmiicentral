@@ -198,24 +198,20 @@ def do_billing_post():
     except IOError:
         print 'IOError: One or more of the files exist.'
     sessions = parsers.ris_parse_file1_file(cfg["upload_path"] + upload.filename)
-    sessions2 = parsers.ris_parse_file2_file(cfg["upload_path"] + upload2.filename)
-    sessions3 = parsers.insertIntoRMCTable3(monthYear)    
+    sessions2 = parsers.ris_parse_file2_file(cfg["upload_path"] + upload2.filename)  
     billing_sql.insertIntoRMCTable1(sessions)
     billing_sql.insertIntoRMCTable2(sessions2)
-    billing_sql.insertIntoRMCTable3(sessions3)
-    newRates = billing_sql.RMCPostImportSql(monthYear)
-    infoView = [sessions, sessions3, newRates, monthYear]
+    sessions3 = billing_sql.importCalpendoIntoRMC_3(monthYear)
+    newRatesProjects = billing_sql.RMCPostImportSql(monthYear)
+    infoView = [sessions, sessions3, newRatesProjects, monthYear]
     return template('billing_import_verify.tpl', result=infoView)
+
 
 @route('/processedBillingData/<monthYear>')
 def do_processedbillingdata(monthYear):
     aaa.require(fail_redirect='/login')
-    humanBillableScanList = billing_sql.return_HumanScans_billing(monthYear)
-    saBillableScanList = billing_sql.return_SmallAnimal_billing(monthYear)
-    ntrBillableScanList = billing_sql.return_NTR_billing(monthYear)
-    srfBillableScanList = billing_sql.return_SRF_billing(monthYear)
-    return template('processedBillingData.tpl', result=[humanBillableScanList, saBillableScanList,
-                                                        ntrBillableScanList, srfBillableScanList])
+    iData = billing_sql.generateInvoiceData(monthYear)
+    return template('processedBillingData.tpl', result=iData)
 
 
 ###### PROJECTS Profile ######

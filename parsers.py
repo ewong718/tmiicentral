@@ -108,10 +108,3 @@ def ris_parse_file2_file(filename):
         sessions.append(row)
         i += 1
     return sessions
-
-
-def insertIntoRMCTable3(monthYear):
-    query_block = "call billingCalpendoByMonth('{monthYear}%')".format(monthYear = monthYear)
-    sessions = run_query(query_block, "calpendo")
-    return sessions
-        
