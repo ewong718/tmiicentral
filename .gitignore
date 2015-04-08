@@ -2,3 +2,4 @@
 *.pyc
 config.json
 auth_conf/users.json
+auth_conf/register.json

@@ -88,8 +88,7 @@ def importCalpendoIntoRMC_3(monthYear):
         entry = Ris(accession_no=row[0], gco=row[1], project=row[2], MRN=row[3], PatientsName=row[4],
                     BirthDate=row[5], target_organ=row[6], target_abbr=row[7],
                     ScanDate=row[8], referring_md=row[9], Duration=row[10], ScanDTTM=row[11],
-                    CompletedDTTM=row[12], Resource=row[13], Investigator=row[14],
-                    fund_no=row[15])
+                    CompletedDTTM=row[12], Resource=row[13])
         s.add(entry)
         try:
             s.commit()
@@ -109,19 +108,19 @@ def RMCPostImportSql(monthYear):
         __table__ = Table('rates', metadata, autoload=True)
 
     # Find new rates and import to database
-    q1 = s.query(Ris.gco, Ris.Investigator, Ris.project,
-                 Ris.target_organ, Ris.target_abbr, Ris.Resource)
+    q1 = s.query(Ris.gco, Ris.target_organ, Ris.target_abbr, Ris.accession_no)
     q2 = q1.outerjoin(Rates, and_(Rates.gco == Ris.gco,
                                   Rates.target_abbr == Ris.target_abbr)).distinct()
     newRates = q2.filter(and_(not_(Ris.gco.contains('spec')),
                               Rates.gco is None, Rates.target_abbr is None)).all()
     for row in newRates:
-        if row[5].startswith('TMII HESS'):
+        accession = row[5]
+        if accession.startswith('BK'):
             system = 'Calpendo'
         else:
             system = 'RIS'
-        entry = Rates(gco=row[0], investigator=row[1], title=row[2],
-                      target_organ=row[3], target_abbr=row[4], system=system)
+        entry = Rates(gco=row[0], target_organ=row[1],
+                      target_abbr=row[2], system=system)
         s.add(entry)
     s.commit()
 

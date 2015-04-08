@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-TMIICentral is a web application for TMII's departmental financial analysis, 
+TMIICentral is a web application for TMII's departmental financial analysis,
 billing, resource usage, and reporting using the Python Bottle web framework.
 Dependencies include Bottle and Cork (It's authentication library).
 
@@ -12,17 +12,22 @@ Created on Jan 28, 2015
 @author: Edmund Wong
 '''
 
-import os, json, bottle, parsers, billing_sql, searchQuery
+import os
+import json
+import bottle
+import parsers
+import billing_sql
+import searchQuery
 from bottle import route, run, template, static_file, error, request, view, post
 from cork import Cork
 from beaker.middleware import SessionMiddleware
 
 
-#Load configuration settings
-with open('./config.json') as f: 
+# Load configuration settings
+with open('./config.json') as f:
     cfg = json.load(f)["main"]
 
-#Initialization
+# Initialization
 session_opts = {
     'session.cookie_expires': True,
     'session.encrypt_key': 'please use a random key and keep it secret!',
@@ -33,14 +38,17 @@ session_opts = {
     }
 
 app = SessionMiddleware(bottle.app(), session_opts)
-aaa = Cork('auth_conf', email_sender=cfg["email_sender"], smtp_url=cfg["smtp_url"])
+aaa = Cork('auth_conf', email_sender=cfg["email_sender"],
+           smtp_url=cfg["smtp_url"])
 
-#Routing
+
+# Routing
 @post('/change_password')
 def change_password():
     """Change password"""
     aaa.reset_password(post_get('reset_code'), post_get('password'))
     return 'Thanks. <a href="/login">Go to login</a>'
+
 
 @bottle.route('/change_password/:reset_code')
 @bottle.view('pw_change_form')
@@ -48,37 +56,45 @@ def change_password2(reset_code):
     """Show password change form"""
     return dict(reset_code=reset_code)
 
+
 @route('/login')
 @view('login_form')
 def login_form():
     """Serve login form"""
     return {}
 
+
 @post('/login')
 def login():
     """Authenticate users"""
     username = post_get('username')
     password = post_get('password')
-    if username == '': 
+    if username == '':
         print 'BlankUserName, but user still logs in...'
         username = 'BlankUserNamePw$nFhA52$s'
-    aaa.login(username, password, success_redirect='/tmiicentral', fail_redirect='/login')
-    
+    aaa.login(username, password,
+              success_redirect='/tmiicentral', fail_redirect='/login')
+
+
 @bottle.route('/logout')
 def logout():
     aaa.logout(success_redirect='/login')
-    
+
+
 @route('/pw_reset')
 @view('pw_reset_form')
 def reset_form():
     """Reset form"""
     return {}
 
+
 @post('/register')
 def register():
     """Send out registration email"""
-    aaa.register(post_get('username'), post_get('password'), post_get('email_address'))
+    aaa.register(post_get('username'), post_get('password'),
+                 post_get('email_address'))
     return 'Please check your mailbox.'
+
 
 @post('/reset_password')
 def send_password_reset_email():
@@ -89,24 +105,27 @@ def send_password_reset_email():
     )
     return 'Please check your mailbox.'
 
+
 @route('/signup')
 @view('signup_form')
 def signup_form():
     """Serve signup form"""
     return {}
 
+
 @route('/validate_registration/:registration_code')
 def validate_registration(registration_code):
     """Validate registration, create user account"""
     aaa.validate_registration(registration_code)
     return 'Thanks. <a href="/login">Go to login</a>'
-    
+
 
 # Core pages
 
 @route('/static/<filename>')
 def server_static(filename):
     return static_file(filename, root='./static')
+
 
 @route('/static/img/<filename>')
 def server_static2(filename):
@@ -119,10 +138,12 @@ def index():
     user = aaa.current_user.username
     return template('main.tpl', user=user)
 
+
 @route('/searchProjects')
 def initSearchProjects():
     aaa.require(fail_redirect='/login')
     return template('searchProjects.tpl', result=None)
+
 
 @route('/searchProjects', method='POST')
 def do_login2():
@@ -132,10 +153,12 @@ def do_login2():
     result = searchQuery.searchProjects(projectType, projectGroup)
     return template('searchProjects.tpl', result=result)
 
+
 @route('/searchBookings')
 def initSearchBookings():
     aaa.require(fail_redirect='/login')
     return template('searchBookings.tpl', result=None)
+
 
 @route('/searchBookings', method='POST')
 def do_login():
@@ -146,10 +169,12 @@ def do_login():
     result = searchQuery.searchBookings(startRange, endRange, resources)
     return template('searchBookings.tpl', result=result)
 
+
 @route('/searchFinances')
 def initSearchFinances():
     aaa.require(fail_redirect='/login')
     return template('searchFinances.tpl', result=None)
+
 
 @route('/searchFinances', method='POST')
 def postSearchFinances():
@@ -159,6 +184,7 @@ def postSearchFinances():
     resources = request.forms.getall('resource')
     result = searchQuery.searchFinances(startRange, endRange, resources)
     return template('searchFinances.tpl', result=result)
+
 
 @route('/rates', method='POST')
 def ratesPost():
@@ -170,11 +196,13 @@ def ratesPost():
     result = searchQuery.getRates()
     return template('rates.tpl', result=result)
 
+
 @route('/rates')
 def rates():
     aaa.require(fail_redirect='/login')
     result = searchQuery.getRates()
     return template('rates.tpl', result=result)
+
 
 @route('/billing')
 def do_billing():
@@ -182,23 +210,24 @@ def do_billing():
     result = None
     return template('billing.tpl', result=result)
 
+
 @route('/billing', method='POST')
 def do_billing_post():
     aaa.require(fail_redirect='/login')
-    upload     = request.files.get('upload')
-    upload2     = request.files.get('upload2')
+    upload = request.files.get('upload')
+    upload2 = request.files.get('upload2')
     monthYear = request.forms.get('monthYear')
     for upload_file in [upload, upload2]:
         _unused, ext = os.path.splitext(upload_file.filename)
-        if ext not in ('.xls','.xlsx','.csv'):
+        if ext not in ('.xls', '.xlsx', '.csv'):
             return 'File extension not allowed.'
-    try:    
-        upload.save(cfg["upload_path"]) # appends upload.filename automatically
+    try:
+        upload.save(cfg["upload_path"])  # appends upload.filename automatically
         upload2.save(cfg["upload_path"])
     except IOError:
         print 'IOError: One or more of the files exist.'
     sessions = parsers.ris_parse_file1_file(cfg["upload_path"] + upload.filename)
-    sessions2 = parsers.ris_parse_file2_file(cfg["upload_path"] + upload2.filename)  
+    sessions2 = parsers.ris_parse_file2_file(cfg["upload_path"] + upload2.filename)
     billing_sql.insertIntoRMCTable1(sessions)
     billing_sql.insertIntoRMCTable2(sessions2)
     sessions3 = billing_sql.importCalpendoIntoRMC_3(monthYear)
@@ -214,7 +243,7 @@ def do_processedbillingdata(monthYear):
     return template('processedBillingData.tpl', result=iData)
 
 
-###### PROJECTS Profile ######
+# PROJECTS Profile
 
 @route('/projects/<gco>')
 def cb(gco):
@@ -224,21 +253,24 @@ def cb(gco):
     return template('gcoProfile.tpl', result=result)
 
 
-###### Custom Queries ######
+# Custom Queries
 
 @route('/customQuery')
 def do_login3():
     result = searchQuery.searchRescheduledBookings()
     return template('base.tpl', result=result)
 
-@route('/customQuery2') #user activity count
+
+@route('/customQuery2')  # user activity count
 def do_login5():
     result = searchQuery.getUserActivity()
     return template('base.tpl', result=result)
 
+
 @error(404)
 def error404(error):
     return 'This page does not exist. Nothing here.'
+
 
 def post_get(name, default=''):
     return request.POST.get(name, default).strip()
