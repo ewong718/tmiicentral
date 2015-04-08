@@ -6,45 +6,20 @@ Created on Mar 3, 2015
 '''
 
 import datetime
-import json
-import keyring
 import pymysql
-from sqlalchemy import create_engine, MetaData, Table, and_, or_, not_
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import and_, or_, not_
+from sqlalchemy.sql.operators import is_
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.declarative import declarative_base
 from searchQuery import run_query
-
-
-def db_connect(db):
-    with open('./config.json') as f:
-        cfg = json.load(f)["mysql"]
-    host = cfg["host"]
-    port = cfg["port"]
-    user = cfg["user"]
-    pw = keyring.get_password(cfg["pw_key_name"], cfg["pw_acct_name"])
-    if db == "calpendo":
-        db = cfg["calpendo_db"]
-    elif db == "rmc":
-        db = cfg["rmc_db"]
-
-    # sqlalchemy
-    global metadata
-    global engine
-    engine = create_engine('mysql+pymysql://{user}:{pw}@{host}:{port}/{db}'.format(host=host, user=user,
-                                                                                   pw=pw, db=db, port=port), echo=False)
-    metadata = MetaData(bind=engine)
-    session = sessionmaker(bind=engine)
-    s = session()
-    return s
+from models import db_connect, Ris, Rates, Project_basics
 
 
 # Import parsed data from first excel file into rmc database
 def insertIntoRMCTable1(result):
     s = db_connect("rmc")
 
-    class Ris(declarative_base()):
-        __table__ = Table('ris', metadata, autoload=True)
+    #class Ris(declarative_base()):
+    #    __table__ = Table('ris', metadata, autoload=True)
     for row in result:
         entry = Ris(gco=row[0], project=row[1], MRN=row[2], PatientsName=row[3],
                     BirthDate=row[4], target_organ=row[5], target_abbr=row[6],
@@ -61,9 +36,6 @@ def insertIntoRMCTable1(result):
 # Import parsed data from second excel file and updates rmc rows
 def insertIntoRMCTable2(result):
     s = db_connect("rmc")
-
-    class Ris(declarative_base()):
-        __table__ = Table('ris', metadata, autoload=True)
     for row in result:
         s.query(Ris).filter(Ris.accession_no == row[0]).update({Ris.ScanDTTM: row[5],
                                                                 Ris.CompletedDTTM: row[6],
@@ -76,8 +48,6 @@ def importCalpendoIntoRMC_3(monthYear):
     result = run_query("call billingCalpendoByMonth('{monthYear}%')".format(monthYear=monthYear), "calpendo")
     s = db_connect("rmc")
 
-    class Ris(declarative_base()):
-        __table__ = Table('ris', metadata, autoload=True)
     for row in result:
         row = list(row)
         for idx, val in enumerate(row):
@@ -101,20 +71,13 @@ def importCalpendoIntoRMC_3(monthYear):
 def RMCPostImportSql(monthYear):
     s = db_connect("rmc")
 
-    class Ris(declarative_base()):
-        __table__ = Table('ris', metadata, autoload=True)
-
-    class Rates(declarative_base()):
-        __table__ = Table('rates', metadata, autoload=True)
-
     # Find new rates and import to database
     q1 = s.query(Ris.gco, Ris.target_organ, Ris.target_abbr, Ris.accession_no)
     q2 = q1.outerjoin(Rates, and_(Rates.gco == Ris.gco,
                                   Rates.target_abbr == Ris.target_abbr)).distinct()
-    newRates = q2.filter(and_(not_(Ris.gco.contains('spec')),
-                              Rates.gco is None, Rates.target_abbr is None)).all()
+    newRates = q2.filter(and_(not_(Ris.gco.contains('spec')), Rates.gco.is_(None), Rates.target_abbr.is_(None))).all()
     for row in newRates:
-        accession = row[5]
+        accession = row[3]
         if accession.startswith('BK'):
             system = 'Calpendo'
         else:
@@ -124,13 +87,10 @@ def RMCPostImportSql(monthYear):
         s.add(entry)
     s.commit()
 
-    class Project_basics(declarative_base()):
-        __table__ = Table('project_basics', metadata, autoload=True)
-
     # Find new RIS projects and import to database
     q1 = s.query(Ris.gco).distinct().outerjoin(Project_basics, Project_basics.gco == Ris.gco)
-    q2 = q1.filter(and_(Project_basics.gco is None, not_(Ris.gco.contains('spec'))),
-                   or_(not_(Ris.Resource.startswith('TMII HESS')), Ris.Resource is None))
+    q2 = q1.filter(and_(Project_basics.gco.is_(None), not_(Ris.gco.contains('spec'))),
+                   or_(not_(Ris.Resource.startswith('TMII HESS')), Ris.Resource.is_(None)))
     newRisProjects = q2.all()
     for row in newRisProjects:
         entry = Project_basics(gco=row[0])
@@ -138,8 +98,7 @@ def RMCPostImportSql(monthYear):
     s.commit()
 
     # Stamp new charges (may not be necessary)
-    q = s.query(Ris).filter(and_(Ris.ScanDate.startswith(monthYear), Ris.charge is None,
-                                 Ris.no_charge_comment is None))
+    q = s.query(Ris).filter(and_(Ris.ScanDate.startswith(monthYear), Ris.charge.is_(None)))
     q.update({Ris.invoice_method: 'TMII Central v3.2', Ris.invoice_date: datetime.date.today()}, synchronize_session=False)
     return [newRates, newRisProjects]
 
@@ -155,7 +114,4 @@ def generateInvoiceData(moYr):
 
 def updateRates(idx, changeBase, changeHalf):
     s = db_connect("rmc")
-
-    class Rates(declarative_base()):
-        __table__ = Table('rates', metadata, autoload=True)
     s.query(Rates).filter(Rates.id == idx).update({Rates.basecharge: changeBase, Rates.addhalfhourcharge: changeHalf})
