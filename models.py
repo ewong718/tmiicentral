@@ -10,9 +10,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import json
 import keyring
+import os
 
-
-with open('./config.json') as f:
+with open(os.path.dirname(__file__) + '/config.json') as f:
     cfg = json.load(f)["mysql"]
 host = cfg["host"]
 port = cfg["port"]
