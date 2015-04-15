@@ -24,7 +24,7 @@ from beaker.middleware import SessionMiddleware
 
 
 # Load configuration settings
-with open('./config.json') as f:
+with open(os.path.dirname(__file__) + '/config.json') as f:
     cfg = json.load(f)["main"]
 
 # Initialization

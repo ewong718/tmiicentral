@@ -149,7 +149,8 @@ def getRates():
 
 
 def run_query(query_block, db):
-    with open('./config.json') as f:
+    import os
+    with open(os.path.dirname(__file__) + '/config.json') as f:
         cfg = json.load(f)["mysql"]
 
     host = cfg["host"]
