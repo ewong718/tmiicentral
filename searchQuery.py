@@ -156,7 +156,7 @@ def run_query(query_block, db):
     host = cfg["host"]
     port = cfg["port"]
     user = cfg["user"]
-    pw = keyring.get_password(cfg["pw_key_name"],cfg["pw_acct_name"])
+    pw = keyring.get_password(cfg["pw_key_name"], cfg["pw_acct_name"])
     if db == "calpendo":
         db = cfg["calpendo_db"]
     elif db == "rmc":

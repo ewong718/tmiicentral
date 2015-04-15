@@ -96,11 +96,11 @@ def ris_parse_file2_file(filename):
         except IndexError:
             break
         try:
-            row[4] =  unicode(xlrd.xldate.xldate_as_datetime(row[4], 0))
+            row[4] = unicode(xlrd.xldate.xldate_as_datetime(row[4], 0))
         except ValueError:
             row[4] = ''
         try:
-            row[5] =  unicode(xlrd.xldate.xldate_as_datetime(row[5], 0))
+            row[5] = unicode(xlrd.xldate.xldate_as_datetime(row[5], 0))
         except ValueError:
             row[5] = ''
         try:

@@ -8,7 +8,6 @@ Created on Mar 3, 2015
 import datetime
 import pymysql
 from sqlalchemy import and_, or_, not_
-from sqlalchemy.sql.operators import is_
 from sqlalchemy.exc import IntegrityError
 from searchQuery import run_query
 from models import db_connect, Ris, Rates, Project_basics
@@ -18,8 +17,6 @@ from models import db_connect, Ris, Rates, Project_basics
 def insertIntoRMCTable1(result):
     s = db_connect("rmc")
 
-    #class Ris(declarative_base()):
-    #    __table__ = Table('ris', metadata, autoload=True)
     for row in result:
         entry = Ris(gco=row[0], project=row[1], MRN=row[2], PatientsName=row[3],
                     BirthDate=row[4], target_organ=row[5], target_abbr=row[6],
