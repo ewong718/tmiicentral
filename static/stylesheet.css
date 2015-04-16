@@ -130,3 +130,32 @@ input[type=submit] {
 	cursor:pointer;
 	-webkit-border-radius: 5px;
 	border-radius: 5px; }
+
+#topDiv {
+	float: left;
+	text-align: right;
+	width: 175px;
+	}
+	
+#midDiv {
+	float: left;
+	text-align: right;
+	width: 225px;
+	}
+
+#botDiv {
+	float: left;
+	text-align: right;
+	width: 225px;
+	}
+	
+#exportCsvDiv {
+	float: left;
+	text-align: right;
+	width: 150px;
+	}
+
+#dvData {
+	padding-top: 20px;
+	clear: left;
+	}

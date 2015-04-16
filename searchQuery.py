@@ -144,7 +144,7 @@ def getRates():
     result = (run_query(query_block, "rmc"),
               ('GCO', 'investigator', 'exam desc', 'examcode', 'system',
                'basecharge', 'addhalfhourcharge',
-               'UPDATE basecharge/addhalfhourcharge'))
+               'UPDATE values (*Must update both values together*)'))
     return result
 
 
