@@ -68,21 +68,8 @@ def importCalpendoIntoRMC_3(monthYear):
 def RMCPostImportSql(monthYear):
     s = db_connect("rmc")
 
-    # Find new rates and import to database
-    q1 = s.query(Ris.gco, Ris.target_organ, Ris.target_abbr, Ris.accession_no)
-    q2 = q1.outerjoin(Rates, and_(Rates.gco == Ris.gco,
-                                  Rates.target_abbr == Ris.target_abbr)).distinct()
-    newRates = q2.filter(and_(not_(Ris.gco.contains('spec')), Rates.gco.is_(None), Rates.target_abbr.is_(None))).all()
-    for row in newRates:
-        accession = row[3]
-        if accession.startswith('BK'):
-            system = 'Calpendo'
-        else:
-            system = 'RIS'
-        entry = Rates(gco=row[0], target_organ=row[1],
-                      target_abbr=row[2], system=system)
-        s.add(entry)
-    s.commit()
+    newRates = run_query("call tc_show_new_ratesb4add", "rmc")
+    run_query("call tc_addNewRates", "rmc")
 
     # Find new RIS projects and import to database
     q1 = s.query(Ris.gco).distinct().outerjoin(Project_basics, Project_basics.gco == Ris.gco)
