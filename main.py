@@ -230,7 +230,8 @@ def do_billing_post():
     sessions2 = parsers.ris_parse_file2_file(cfg["upload_path"] + upload2.filename)
     billing_sql.insertIntoRMCTable1(sessions)
     billing_sql.insertIntoRMCTable2(sessions2)
-    sessions3 = billing_sql.importCalpendoIntoRMC_3(monthYear)
+    #sessions3 = billing_sql.importCalpendoIntoRMC_3(monthYear)
+    sessions3 = []
     newRatesProjects = billing_sql.RMCPostImportSql(monthYear)
     infoView = [sessions, sessions3, newRatesProjects, monthYear]
     return template('billing_import_verify.tpl', result=infoView)
