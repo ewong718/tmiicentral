@@ -159,3 +159,15 @@ input[type=submit] {
 	padding-top: 20px;
 	clear: left;
 	}
+	
+#topDivBkings {
+	float: left;
+	text-align: right;
+	width: 175px;
+	}
+	
+#midDivBkings {
+	float: left;
+	text-align: right;
+	width: 350px;
+	}
