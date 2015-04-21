@@ -134,7 +134,7 @@ def searchFinances(start, end, resources):
     result = (run_query(query_block, "calpendo"),
               ('GCO', 'FundNumber', 'Investigator',
                'Revenue', 'totalApprovedHours', 'DevelopmentHours',
-               'NonDevelopmentHours', 'risHours', 'CalpendoHours'))
+               'NonDevelopmentHours', 'risHours', 'CalpendoHours','CalBookingCount','CalNonDevBookingCount', 'CalDevBookingCount','RisBookingCount'))
     return result
 
 
