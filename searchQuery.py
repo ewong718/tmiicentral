@@ -110,6 +110,7 @@ def getGcoInfo(gco):
     r = {'gcoInfo': run_query("CALL getGcoInfo('{gco}')".format(gco=gco), "calpendo"),
          'gcoResourcesUsed': run_query("CALL getGcoInfo_resourcesUsed('{gco}')".format(gco=gco), "calpendo"),
          'gcoUsers': run_query("CALL getGcoInfo_users('{gco}')".format(gco=gco), "calpendo"),
+         'gcoRates': run_query("CALL getGco_Rate('{gco}')".format(gco=gco), "rmc"),
          'header': ('Title', 'GCO', 'PI', 'Status', 'Type', 'PI email',
                     'PI Phone Number', 'Coordinator E-mail', 'Coordinator Name',
                     'Primary Resource', 'Other investigators', 'Department',

@@ -205,3 +205,8 @@ input[type=submit] {
 #GCOprofile_extra th {
 	background-color: #C7C7B7
 	}
+
+#gP_label {
+	font-size: 20px;
+	padding-bottom: 5px;
+	}
