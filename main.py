@@ -7,7 +7,8 @@ Dependencies include Bottle and Cork (It's authentication library).
 Bottle: http://bottlepy.org/docs/dev/index.html
 Cork: http://cork.firelet.net/
 
-Created on Jan 28, 2015
+v2.1
+Created on Jan 28, 2015 
 
 @author: Edmund Wong
 '''
@@ -167,7 +168,10 @@ def do_login():
     endRange = request.forms.get('endRange')
     resources = request.forms.getall('resource')
     result = searchQuery.searchBookings(startRange, endRange, resources)
-    return template('searchBookings.tpl', result=result)
+    return template('searchBookings.tpl',
+                    result=result,
+                    startRange=startRange,
+                    endRange=endRange)
 
 
 @route('/searchFinances')
@@ -183,7 +187,10 @@ def postSearchFinances():
     endRange = request.forms.get('endRange')
     resources = request.forms.getall('resource')
     result = searchQuery.searchFinances(startRange, endRange, resources)
-    return template('searchFinances.tpl', result=result)
+    return template('searchFinances.tpl',
+                    result=result,
+                    startRange=startRange,
+                    endRange=endRange)
 
 
 @route('/rates', method='POST')
@@ -248,9 +255,12 @@ def do_processedbillingdata(monthYear):
 @route('/projects/<gco>')
 def cb(gco):
     aaa.require(fail_redirect='/login')
-    result = list(searchQuery.getGcoInfo(gco))
-    result.append(gco)
-    return template('gcoProfile.tpl', result=result)
+    r = searchQuery.getGcoInfo(gco)
+    if not r['gcoInfo']:
+        return 'GCO {gco} does not exist in calpendo_tmii database.'.format(gco=gco)
+    return template('gcoProfile.tpl',
+                    r=r,
+                    gco=gco)
 
 
 # Custom Queries

@@ -42,7 +42,6 @@ def searchBookings(startRange, endRange, resources):
         and bookings.start_date <= '""" + endRange + """')
         and (bookings.resource_id """ + resource_id_condition
 
-    print query_block
     result = (run_query(query_block, "calpendo"),
               ('GCO', 'PI', 'FundNumber', 'Funding Source',
                'Resource', 'Date', 'Duration', 'Development',
@@ -81,7 +80,6 @@ def searchProjects(projectType, projectGroup):
         projects.type_id """ + projectType_condition + """ and
         (project_groups.name """ + projectGroup_condition
 
-    print query_block
     result = (run_query(query_block, "calpendo"),
               ('GCO', 'Name', 'Type', 'PI', 'Pi Email',
                'PI Phone Number', 'FundNumber', 'Funding Source'))
@@ -108,21 +106,19 @@ def searchRescheduledBookings():
 
 
 def getGcoInfo(gco):
-    result = (run_query("CALL getGcoInfo('{gco}')".format(gco=gco),
-              "calpendo"),
-              run_query("CALL getGcoInfo_resourcesUsed('{gco}')".format(gco=gco),
-              "calpendo"),
-              run_query("CALL getGcoInfo_users('{gco}')".format(gco=gco),
-              "calpendo"),
-              ('Title', 'GCO', 'PI', 'Status', 'Type', 'PI email',
-               'PI Phone Number', 'Coordinator E-mail', 'Coordinator Name',
-               'Primary Resource', 'Other investigators', 'Department',
-               'Description', 'Fund#', 'Duration', 'Proposed Start Date',
-               'Total Dollar Budget', '# of Scans (Year 1)',
-               '# of Scans (Year 2)', '# of Scans (Year 3)',
-               '# of Scans (Year 4)', '# of Scans (Year 5)',
-               'Session Duration'))
-    return result
+    
+    r = {'gcoInfo': run_query("CALL getGcoInfo('{gco}')".format(gco=gco), "calpendo"),
+         'gcoResourcesUsed': run_query("CALL getGcoInfo_resourcesUsed('{gco}')".format(gco=gco), "calpendo"),
+         'gcoUsers': run_query("CALL getGcoInfo_users('{gco}')".format(gco=gco), "calpendo"),
+         'header': ('Title', 'GCO', 'PI', 'Status', 'Type', 'PI email',
+                    'PI Phone Number', 'Coordinator E-mail', 'Coordinator Name',
+                    'Primary Resource', 'Other investigators', 'Department',
+                    'Description', 'Fund#', 'Duration', 'Proposed Start Date',
+                    'Total Dollar Budget', '# of Scans (Year 1)',
+                    '# of Scans (Year 2)', '# of Scans (Year 3)',
+                    '# of Scans (Year 4)', '# of Scans (Year 5)',
+                    'Session Duration')}
+    return r
 
 
 def searchFinances(start, end, resources):

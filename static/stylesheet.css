@@ -131,6 +131,7 @@ input[type=submit] {
 	-webkit-border-radius: 5px;
 	border-radius: 5px; }
 
+/*Side-by-side Alignment of filter buttons*/
 #topDiv {
 	float: left;
 	text-align: right;
@@ -170,4 +171,37 @@ input[type=submit] {
 	float: left;
 	text-align: right;
 	width: 350px;
+	}
+	
+/*GCO Profile side-by-side*/
+
+#gP_left {
+	float: left;
+	text-align: right;
+	width: 650px;
+	}
+
+#gP_mid {
+	float: left;
+	text-align: right;
+	width: 250px;
+	}
+	
+#gP_right {
+	float: left;
+	text-align: right;
+	width: 250px;
+	}
+
+#GCOprofile_extra th, td {
+	border: 0px solid gray;
+	padding: 5px;
+	}
+	
+#GCOprofile_extra tr:nth-child(even) {
+    background-color: #E8E8E8;
+}
+
+#GCOprofile_extra th {
+	background-color: #C7C7B7
 	}

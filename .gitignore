@@ -3,3 +3,4 @@
 config.json
 auth_conf/users.json
 auth_conf/register.json
+version_log.txt
