@@ -136,8 +136,7 @@ def searchFinances(start, end, resources):
 
 
 def getRates():
-    query_block = """select id, gco, investigator, target_organ, target_abbr,
-                    system, basecharge, addhalfhourcharge from rates"""
+    query_block = """select * from tc_ratestmiicentral"""
     result = (run_query(query_block, "rmc"),
               ('GCO', 'investigator', 'exam desc', 'examcode', 'system',
                'basecharge', 'addhalfhourcharge',
