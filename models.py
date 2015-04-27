@@ -47,3 +47,6 @@ class Rates(declarative_base()):
 
 class Project_basics(declarative_base()):
     __table__ = Table('project_basics', r_metadata, autoload=True)
+
+class Examcodes(declarative_base()):
+    __table__ = Table('examcodes', r_metadata, autoload=True)

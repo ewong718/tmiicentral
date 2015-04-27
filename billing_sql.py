@@ -10,7 +10,7 @@ import pymysql
 from sqlalchemy import and_, or_, not_
 from sqlalchemy.exc import IntegrityError
 from searchQuery import run_query
-from models import db_connect, Ris, Rates, Project_basics
+from models import db_connect, Ris, Rates, Project_basics, Examcodes
 
 
 # Import parsed data from first excel file into rmc database
@@ -28,7 +28,15 @@ def insertIntoRMCTable1(result):
         except IntegrityError:
             print "Warning: Duplicate row detected in ris table."
             s.rollback()
-
+        else:
+            examEntry = Examcodes(target_abbr=row[6], target_organ=row[5])
+            s.add(examEntry)
+            try:
+                s.commit()
+            except IntegrityError:
+                print "Warning: Examcode already exists."
+                s.rollback()
+                
 
 # Import parsed data from second excel file and updates rmc rows
 def insertIntoRMCTable2(result):
@@ -62,6 +70,14 @@ def importCalpendoIntoRMC_3(monthYear):
         except IntegrityError:
             print "Warning: Duplicate row detected in ris table."
             s.rollback()
+        else:
+            examEntry = Examcodes(target_abbr=row[7], target_organ=row[6])
+            s.add(examEntry)
+            try:
+                s.commit()
+            except IntegrityError:
+                print "Warning: Examcode already exists."
+                s.rollback()
     return result
 
 
