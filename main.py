@@ -22,7 +22,7 @@ import searchQuery
 from bottle import route, run, template, static_file, error, request, view, post
 from cork import Cork
 from beaker.middleware import SessionMiddleware
-
+from pymysql import OperationalError
 
 # Load configuration settings
 with open(os.path.dirname(__file__) + '/config.json') as f:
@@ -235,10 +235,13 @@ def do_billing_post():
         print 'IOError: One or more of the files exist.'
     sessions = parsers.ris_parse_file1_file(cfg["upload_path"] + upload.filename)
     sessions2 = parsers.ris_parse_file2_file(cfg["upload_path"] + upload2.filename)
-    billing_sql.insertIntoRMCTable1(sessions)
-    billing_sql.insertIntoRMCTable2(sessions2)
-    sessions3 = billing_sql.importCalpendoIntoRMC_3(monthYear)
-    newRatesProjects = billing_sql.RMCPostImportSql(monthYear)
+    try:
+        billing_sql.insertIntoRMCTable1(sessions)
+        billing_sql.insertIntoRMCTable2(sessions2)
+        sessions3 = billing_sql.importCalpendoIntoRMC_3(monthYear)
+        newRatesProjects = billing_sql.RMCPostImportSql(monthYear)
+    except OperationalError:
+        return 'OperationalError (pymysql). Please return to the previous page and retry.'
     infoView = [sessions, sessions3, newRatesProjects, monthYear]
     return template('billing_import_verify.tpl', result=infoView)
 
