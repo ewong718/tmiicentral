@@ -64,7 +64,7 @@ def ris_parse_file1_file(filename):
             val3 = val2
             while GCOcol[val3+1] != '':
                 gco         = GCOcol[val3+1][2:]
-                project     = myCol2[val]
+                project     = myCol2[gco_idx[-1]]
                 mrn          = myCol2[val2][4:]
                 patientsname = myCol[val2]
                 dob         = unicode(xlrd.xldate.xldate_as_datetime(dobCol[val3+1], 0).date())
