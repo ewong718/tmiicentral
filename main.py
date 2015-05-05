@@ -222,28 +222,26 @@ def do_billing():
 def do_billing_post():
     aaa.require(fail_redirect='/login')
     upload = request.files.get('upload')
-    upload2 = request.files.get('upload2')
     monthYear = request.forms.get('monthYear')
-    for upload_file in [upload, upload2]:
-        _unused, ext = os.path.splitext(upload_file.filename)
-        if ext not in ('.xls', '.xlsx', '.csv'):
-            return 'File extension not allowed.'
+    _unused, ext = os.path.splitext(upload.filename)
+    if ext not in ('.xls', '.xlsx', '.csv'):
+        return 'File extension not allowed.'
     try:
-        upload.save(cfg["upload_path"])  # appends upload.filename automatically
-        upload2.save(cfg["upload_path"])
+        upload.save(cfg["upload_path"]) # appends upload.filename automatically
     except IOError:
         print 'IOError: One or more of the files exist.'
-    sessions = parsers.ris_parse_file1_file(cfg["upload_path"] + upload.filename)
-    sessions2 = parsers.ris_parse_file2_file(cfg["upload_path"] + upload2.filename)
+    rsrch_allSessions = parsers.ris_parse_file2_file(cfg["upload_path"] + upload.filename)
     try:
-        billing_sql.insertIntoRMCTable1(sessions)
-        billing_sql.insertIntoRMCTable2(sessions2)
-        sessions3 = billing_sql.importCalpendoIntoRMC_3(monthYear)
+        r = billing_sql.insertIntoRMCTable(rsrch_allSessions)
+        c = billing_sql.importCalpendoIntoRMC(monthYear)
         newRatesProjects = billing_sql.RMCPostImportSql(monthYear)
     except OperationalError:
         return 'OperationalError (pymysql). Please return to the previous page and retry.'
-    infoView = [sessions, sessions3, newRatesProjects, monthYear]
-    return template('billing_import_verify.tpl', result=infoView)
+    infoView = {'ris_bill_tbl':r,
+                'cal_bill_tbl':c,
+                'newRatesProjects':newRatesProjects,
+                'monthYear':monthYear}
+    return template('billing_import_verify.tpl', i=infoView)
 
 
 @route('/processedBillingData/<monthYear>')

@@ -13,43 +13,53 @@ from searchQuery import run_query
 from models import db_connect, Ris, Rates, Project_basics, Examcodes
 
 
-# Import parsed data from first excel file into rmc database
-def insertIntoRMCTable1(result):
+# Import parsed data from RSRCH excel file and updates rmc rows
+def insertIntoRMCTable(result):
     s = db_connect("rmc")
-
+    session = []
     for row in result:
-        entry = Ris(gco=row[0], project=row[1], MRN=row[2], PatientsName=row[3],
-                    BirthDate=row[4], target_organ=row[5], target_abbr=row[6],
-                    accession_no=row[7], ScanDate=row[8], referring_md=row[9],
-                    status=row[10])
-        s.add(entry)
-        try:
-            s.commit()
-        except IntegrityError:
-            print "Warning: Duplicate row detected in ris table."
-            s.rollback()
-        else:
-            examEntry = Examcodes(target_abbr=row[6], target_organ=row[5])
-            s.add(examEntry)
+        if row[12] != 'X' and not row[10].startswith('RE'):
+            org = row[10][:2]
+            if org == 'PE': #PET exam descriptions are in part of NM
+                org = 'NM'
+            examcode = '(' + org  + ') ' + row[9]
+            entry = Ris(gco=row[7][2:],
+                        project=row[8],
+                        MRN=row[1],
+                        PatientsName=row[2] + ', ' + row[3],
+                        BirthDate=row[4],
+                        target_organ=row[10],
+                        target_abbr=examcode,
+                        accession_no=row[0],
+                        ScanDate=row[5],
+                        referring_md=row[14],
+                        status=row[12],
+                        ScanDTTM=row[5],
+                        CompletedDTTM=row[6],
+                        Resource=row[11],
+                        Duration=row[13])
+            s.add(entry)
             try:
                 s.commit()
             except IntegrityError:
-                print "Warning: Examcode already exists."
+                print "Warning: Duplicate row detected in ris table."
                 s.rollback()
-                
-
-# Import parsed data from second excel file and updates rmc rows
-def insertIntoRMCTable2(result):
-    s = db_connect("rmc")
-    for row in result:
-        s.query(Ris).filter(Ris.accession_no == row[0]).update({Ris.ScanDTTM: row[5],
-                                                                Ris.CompletedDTTM: row[6],
-                                                                Ris.Resource: row[11],
-                                                                Ris.Duration: row[13]})
+            else:
+                examEntry = Examcodes(target_abbr=examcode, target_organ=row[10])
+                s.add(examEntry)
+                try:
+                    s.commit()
+                except IntegrityError:
+                    print "Warning: Examcode already exists."
+                    s.rollback()
+            disp_entry = [row[7][2:], row[8], row[1], row[2] + ', ' + row[3], row[4][:10],
+                          examcode, row[10], row[0], row[5][:10], row[14], row[12]]
+            session.append(disp_entry)
+    return session
 
 
 # Import calpendo into rmc
-def importCalpendoIntoRMC_3(monthYear):
+def importCalpendoIntoRMC(monthYear):
     result = run_query("call billingCalpendoByMonth('{monthYear}%')".format(monthYear=monthYear), "calpendo")
     s = db_connect("rmc")
 

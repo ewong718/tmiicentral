@@ -10,9 +10,11 @@ Created on Mar 3, 2015
 import xlrd
 
 
+# NOTE- ris_parse_file1_file is a depreciated function because we are no longer parsing file 1.
 # Parses Centricity Research File 1 into Mysql importable list
-def ris_parse_file1_file(filename):
 
+def ris_parse_file1_file(filename):
+    
     wb = xlrd.open_workbook(filename)
 
     sheet = wb.sheet_by_index(0)
