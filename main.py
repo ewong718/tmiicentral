@@ -137,13 +137,15 @@ def server_static2(filename):
 def index():
     aaa.require(fail_redirect='/login')
     user = aaa.current_user.username
-    return template('main.tpl', user=user)
+    return template('main.tpl',
+                    user=user)
 
 
 @route('/searchProjects')
 def initSearchProjects():
     aaa.require(fail_redirect='/login')
-    return template('searchProjects.tpl', result=None)
+    return template('searchProjects.tpl',
+                    result=None)
 
 
 @route('/searchProjects', method='POST')
@@ -152,13 +154,15 @@ def do_login2():
     projectType = request.forms.getall('projectType')
     projectGroup = request.forms.getall('projectGroup')
     result = searchQuery.searchProjects(projectType, projectGroup)
-    return template('searchProjects.tpl', result=result)
+    return template('searchProjects.tpl',
+                    result=result)
 
 
 @route('/searchBookings')
 def initSearchBookings():
     aaa.require(fail_redirect='/login')
-    return template('searchBookings.tpl', result=None)
+    return template('searchBookings.tpl',
+                    result=None)
 
 
 @route('/searchBookings', method='POST')
@@ -177,7 +181,8 @@ def do_login():
 @route('/searchFinances')
 def initSearchFinances():
     aaa.require(fail_redirect='/login')
-    return template('searchFinances.tpl', result=None)
+    return template('searchFinances.tpl',
+                    result=None)
 
 
 @route('/searchFinances', method='POST')
@@ -201,21 +206,43 @@ def ratesPost():
     changeHalf = request.forms.get('changeHalf')
     billing_sql.updateRates(idx, changeBase, changeHalf)
     result = searchQuery.getRates()
-    return template('rates.tpl', result=result)
+    return template('rates.tpl',
+                    result=result)
 
 
 @route('/rates')
 def rates():
     aaa.require(fail_redirect='/login')
     result = searchQuery.getRates()
-    return template('rates.tpl', result=result)
+    return template('rates.tpl',
+                    result=result)
+
+
+@route('/srfusage', method='POST')
+def srfUsagePost():
+    aaa.require(fail_redirect='/login')
+    startRange = request.forms.get('startRange')
+    endRange = request.forms.get('endRange')
+    result = searchQuery.srfUsageSearch(startRange, endRange)
+    return template('srfusage.tpl',
+                    result=result,
+                    startRange=startRange,
+                    endRange=endRange)
+
+
+@route('/srfusage')
+def srfUsage():
+    aaa.require(fail_redirect='/login')
+    return template('srfusage.tpl',
+                    result=None)
 
 
 @route('/billing')
 def do_billing():
     aaa.require(fail_redirect='/login')
     result = None
-    return template('billing.tpl', result=result)
+    return template('billing.tpl',
+                    result=result)
 
 
 @route('/billing', method='POST')

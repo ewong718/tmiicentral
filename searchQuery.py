@@ -143,6 +143,12 @@ def getRates():
                'UPDATE values (*Must update both values together*)'))
     return result
 
+def srfUsageSearch(start, end):
+    query_block = "call srfUsage('{start}%','{end}%')".format(start=start, end=end)
+    result = (run_query(query_block, 'calpendo'),('GCO', 'Resource', 'start_date', 'finish_date', 'Duration(hours)',
+               'User and Notes', 'Investigator','department','fund_number',
+               'development'))
+    return result
 
 def run_query(query_block, db):
     import os
