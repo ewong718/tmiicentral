@@ -235,6 +235,25 @@ def srfUsage():
     aaa.require(fail_redirect='/login')
     return template('srfusage.tpl',
                     result=None)
+    
+    
+@route('/brukerusage', method='POST')
+def brukerUsagePost():
+    aaa.require(fail_redirect='/login')
+    startRange = request.forms.get('startRange')
+    endRange = request.forms.get('endRange')
+    result = searchQuery.brukerUsageSearch(startRange, endRange)
+    return template('brukerusage.tpl',
+                    result=result,
+                    startRange=startRange,
+                    endRange=endRange)
+
+
+@route('/brukerusage')
+def brukerUsage():
+    aaa.require(fail_redirect='/login')
+    return template('brukerusage.tpl',
+                    result=None)  
 
 
 @route('/billing')
