@@ -20,9 +20,9 @@ def insertIntoRMCTable(result):
     for row in result:
         if row[12] != 'X' and not row[10].startswith('RE'):
             org = row[10][:2]
-            if org == 'PE': #PET exam descriptions are in part of NM
+            if org == 'PE':  # PET exam descriptions are in part of NM
                 org = 'NM'
-            examcode = '(' + org  + ') ' + row[9]
+            examcode = '(' + org + ') ' + row[9]
             entry = Ris(gco=row[7][2:],
                         project=row[8],
                         MRN=row[1],

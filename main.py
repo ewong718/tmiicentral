@@ -7,8 +7,8 @@ Dependencies include Bottle and Cork (It's authentication library).
 Bottle: http://bottlepy.org/docs/dev/index.html
 Cork: http://cork.firelet.net/
 
-v2.1
-Created on Jan 28, 2015 
+v2.2
+Created on Jan 28, 2015
 
 @author: Edmund Wong
 '''
@@ -235,8 +235,8 @@ def srfUsage():
     aaa.require(fail_redirect='/login')
     return template('srfusage.tpl',
                     result=None)
-    
-    
+
+
 @route('/brukerusage', method='POST')
 def brukerUsagePost():
     aaa.require(fail_redirect='/login')
@@ -253,7 +253,7 @@ def brukerUsagePost():
 def brukerUsage():
     aaa.require(fail_redirect='/login')
     return template('brukerusage.tpl',
-                    result=None)  
+                    result=None)
 
 
 @route('/billing')
@@ -273,7 +273,8 @@ def do_billing_post():
     if ext not in ('.xls', '.xlsx', '.csv'):
         return 'File extension not allowed.'
     try:
-        upload.save(cfg["upload_path"]) # appends upload.filename automatically
+        # appends upload.filename automatically
+        upload.save(cfg["upload_path"])
     except IOError:
         print 'IOError: One or more of the files exist.'
     rsrch_allSessions = parsers.ris_parse_file2_file(cfg["upload_path"] + upload.filename)
@@ -283,10 +284,10 @@ def do_billing_post():
         newRatesProjects = billing_sql.RMCPostImportSql(monthYear)
     except OperationalError:
         return 'OperationalError (pymysql). Please return to the previous page and retry.'
-    infoView = {'ris_bill_tbl':r,
-                'cal_bill_tbl':c,
-                'newRatesProjects':newRatesProjects,
-                'monthYear':monthYear}
+    infoView = {'ris_bill_tbl': r,
+                'cal_bill_tbl': c,
+                'newRatesProjects': newRatesProjects,
+                'monthYear': monthYear}
     return template('billing_import_verify.tpl', i=infoView)
 
 
