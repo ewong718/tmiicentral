@@ -18,11 +18,13 @@ def insertIntoRMCTable(result):
     s = db_connect("rmc")
     session = []
     for row in result:
-        if row[12] != 'X' and not row[10].startswith('RE'):
+        if row[12] != 'X' and not row[10].startswith('RE '):
             org = row[10][:2]
             if org == 'PE':  # PET exam descriptions are in part of NM
                 org = 'NM'
             examcode = '(' + org + ') ' + row[9]
+            if row[6] == '':  #Check if CompletedDTTM is blank
+                row[6] = None
             entry = Ris(gco=row[7][2:],
                         project=row[8],
                         MRN=row[1],
