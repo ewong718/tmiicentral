@@ -18,7 +18,7 @@ def insertIntoRMCTable(result):
     s = db_connect("rmc")
     session = []
     for row in result:
-        if row[12] != 'X' and not row[10].startswith('RE '):
+        if row[12] != 'X' and not row[10].startswith('RE'):
             org = row[10][:2]
             if org == 'PE':  # PET exam descriptions are in part of NM
                 org = 'NM'
